@@ -126,6 +126,12 @@ const products = [
         description: "Gorra deportiva en amarillo brillante con alta visibilidad. Material ligero y resistente al agua. Perfecta para actividades al aire libre. Tallas disponibles: XS, S, M, L, XL."
     }
 ];
+export const categories = [
+    { id: "MLA1744", name: "Relojes" },
+    { id: "MLA1000", name: "Gafas" },
+    { id: "MLA1574", name: "Gorras" }
+    
+];
 
 export const getProducts = (categoryId) => {
     return new Promise((resolve) => {
