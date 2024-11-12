@@ -62,6 +62,8 @@ button:focus-visible {
 .custom-navbar {
   background-color: white;
   border-bottom: 1px solid #3a506d;
+  padding: 0.5rem 1rem;
+  z-index: 1030;
 }
 
 .custom-nav-links .nav-link {
@@ -75,6 +77,21 @@ button:focus-visible {
 .cart-icon svg {
   color: #3a506d;
   font-size: 1.5rem; /* Adjust the size as needed */
+}
+
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  margin-right: 0.05rem;
+  font-size: 1.2rem;
+  color: #3a506d;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 @media (prefers-color-scheme: light) {
