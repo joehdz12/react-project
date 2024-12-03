@@ -1,27 +1,56 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import { FaMinus, FaPlus } from 'react-icons/fa';
-import { getProductById } from '../asyncMock';
+import { getProductById } from '../firebase/firebase';
+import ItemDetail from './ItemDetail';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import { CartContext } from './CartContext';
 
-const ProductDetail = () => {
+const ItemDetailContainer = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addItem } = useContext(CartContext);
 
   useEffect(() => {
+    let timeoutId;
     const loadProduct = async () => {
       setLoading(true);
-      const productData = await getProductById(id);
-      setProduct(productData);
+      setError(false);
+      try {
+        const productData = await getProductById(id);
+        if (productData) {
+          setProduct(productData);
+        } else {
+          setError(true);
+  
+          timeoutId = setTimeout(() => {
+            navigate('/');
+          }, 3000);
+        }
+      } catch (error) {
+        setError(true);
+        console.error('Error loading product:', error);
+      }
       setLoading(false);
     };
+    
     loadProduct();
-  }, [id]);
+
+    // Cleanup function
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [id, navigate]);
 
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 0) {
+    if (!isNaN(value) && value >= 0 && value <= product.available_quantity) {
       setQuantity(value);
     }
   };
@@ -31,7 +60,30 @@ const ProductDetail = () => {
   };
 
   const increaseQuantity = () => {
-    setQuantity(prev => prev + 1);
+    setQuantity(prev => Math.min(prev + 1, product.available_quantity));
+  };
+
+  const handleAddToCart = () => {
+    if (quantity > 0 && product) {
+      addItem(product, quantity);
+      toast.success(`${quantity} ${quantity === 1 ? 'item' : 'items'} añadido al carrito`, {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        style: {
+          backgroundColor: '#fff',
+          color: '#3a506d'
+        },
+        progressStyle: {
+          background: '#3a506d'
+        },
+        icon: <div style={{ color: '#3a506d' }}>✓</div>
+      });
+      setQuantity(1);
+    }
   };
 
   if (loading) {
@@ -46,73 +98,32 @@ const ProductDetail = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="container mt-5 pt-5">
+        <div className="text-center">
+          <h2 style={{ color: '#dc3545' }}>Producto no encontrado</h2>
+          <p>Redirigiendo al inicio...</p>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="container mt-5 pt-5">
       {product && (
-        <div className="row">
-          <div className="col-md-6">
-            <img 
-              src={product.pictures[0].url} 
-              alt={product.title} 
-              className="img-fluid"
-            />
-          </div>
-          <div className="col-md-6">
-            <h2>{product.title}</h2>
-            <p className="lead">${product.price}</p>
-            <p>{product.description}</p>
-            <p>Stock disponible: {product.available_quantity}</p>
-            
-            {/* Quantity Counter */}
-            <div className="d-flex align-items-center py-3 justify-content-center mb-3">
-              <button 
-                className="btn btn-outline-secondary" 
-                onClick={decreaseQuantity}
-                style={{ 
-                  backgroundColor: '#3a506d',
-                  color: 'white',
-                  border: 'none'
-                }}
-              >
-                <FaMinus />
-              </button>
-              <input
-                type="number"
-                className="form-control mx-2 text-center"
-                style={{ width: '70px' }}
-                value={quantity}
-                onChange={handleQuantityChange}
-                min="0"
-              />
-              <button 
-                className="btn btn-outline-secondary"
-                onClick={increaseQuantity}
-                style={{ 
-                  backgroundColor: '#3a506d',
-                  color: 'white',
-                  border: 'none'
-                }}
-              >
-                <FaPlus />
-              </button>
-            </div>
-
-            <button 
-              className="btn"
-              style={{ 
-                backgroundColor: '#3a506d',
-                color: 'white',
-                border: 'none'
-              }}
-              disabled={quantity === 0}
-            >
-              Agregar al carrito
-            </button>
-          </div>
-        </div>
+        <ItemDetail 
+          product={product}
+          quantity={quantity}
+          onQuantityChange={handleQuantityChange}
+          onDecrease={decreaseQuantity}
+          onIncrease={increaseQuantity}
+          onAddToCart={handleAddToCart}
+        />
       )}
     </div>
   );
 };
 
-export default ProductDetail;
+export default ItemDetailContainer;

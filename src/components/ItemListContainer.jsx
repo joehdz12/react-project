@@ -1,21 +1,47 @@
+// ItemListContainer.jsx
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { getProducts } from '../asyncMock';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getProducts } from '../firebase/firebase';
+import { toast } from 'react-toastify';
+import ItemList from './ItemList';
 
 const ItemListContainer = ({ greeting }) => {
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const { id } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    let timeoutId;
     const loadProducts = async () => {
       setLoading(true);
-      const products = await getProducts(id);
-      setAllProducts(products);
+      setError(false);
+      try {
+        const products = await getProducts(id);
+        if (products.length === 0 && id) {
+          setError(true);
+          timeoutId = setTimeout(() => {
+            navigate('/');
+          }, 3000);
+        } else {
+          setAllProducts(products);
+        }
+      } catch (error) {
+        setError(true);
+        console.error('Error loading products:', error);
+      }
       setLoading(false);
     };
+    
     loadProducts();
-  }, [id]);
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [id, navigate]);
 
   if (loading) {
     return (
@@ -29,53 +55,21 @@ const ItemListContainer = ({ greeting }) => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="container mt-5 pt-5">
+        <div className="text-center">
+          <h2 style={{ color: '#dc3545' }}>Categoría no encontrada</h2>
+          <p>Redirigiendo al inicio...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mt-5 pt-4">
-      <h1 className="text-center">{greeting}</h1>
-      <div className="row g-4 justify-content-center">
-        {allProducts.map(product => (
-          <div key={product.id} className="col-md-4 mb-4" style={{ minWidth: '300px', maxWidth: '400px' }}> 
-            <div className="card h-100 shadow-sm">
-              <div className="card-img-container p-3">
-                <img 
-                  src={product.pictures[0].url}
-                  className="card-img-top" 
-                  alt={product.title}
-                  style={{ 
-                    height: '220px',
-                    objectFit: 'contain',
-                    width: '100%'
-                  }}
-                />
-              </div>
-              <div className="card-body d-flex flex-column">
-                <h5 className="card-title" style={{ fontSize: '1rem', minHeight: '2.5rem' }}>
-                  {product.title.length > 50 
-                    ? `${product.title.substring(0, 50)}...` 
-                    : product.title}
-                </h5>
-                <p className="card-text fs-4 mb-2">
-                  <strong>${product.price}</strong>
-                </p>
-                <p className="card-text text-muted mb-3">
-                  <small>Stock disponible: {product.available_quantity}</small>
-                </p>
-                <Link 
-  to={`/item/${product.id}`}
-  className="btn mt-auto"
-  style={{ 
-    backgroundColor: '#3a506d',
-    color: 'white',
-    border: 'none'
-  }}
->
-  Ver detalle
-</Link>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <div className="text-center mb-4">{greeting}</div>
+      <ItemList products={allProducts} />
     </div>
   );
 };

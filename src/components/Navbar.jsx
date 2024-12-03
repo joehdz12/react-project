@@ -4,31 +4,24 @@ import { Link } from 'react-router-dom';
 import { FaGlasses, FaClock, FaHatCowboy } from "react-icons/fa"; // Update icons
 import logo from '../assets/blogo.png';
 import CartWidget from './CartWidget';
-import { getCategories } from '../asyncMock';
+import { categories } from '../config/categories';
 
 const MyNavbar = ({ cartItems }) => {
   const [categories, setCategories] = useState([]);
 
-  
-  const categoryIcons = {
-    "MLA1000": <FaGlasses className="me-2" />, // Gafas
-    "MLA1744": <FaClock className="me-2" />,   // Relojes
-    "MLA1574": <FaHatCowboy className="me-2" /> // Gorras
-  };
-
   useEffect(() => {
-    const loadCategories = async () => {
-      const data = await getCategories();
-      
-      const desiredCategories = [
-        { id: "MLA1000", name: "Gafas" },
-        { id: "MLA1744", name: "Relojes" },
-        { id: "MLA1574", name: "Gorras" }
-      ];
-      setCategories(desiredCategories);
-    };
-    loadCategories();
+    setCategories([
+      { id: "MLA1000", name: "Gafas" },
+      { id: "MLA1744", name: "Relojes" },
+      { id: "MLA1574", name: "Gorras" }
+    ]);
   }, []);
+
+  const categoryIcons = {
+    "MLA1000": <FaGlasses className="me-2" />, 
+    "MLA1744": <FaClock className="me-2" />,  
+    "MLA1574": <FaHatCowboy className="me-2" /> 
+  };
 
   return (
     <Navbar 
